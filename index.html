@@ -34,7 +34,7 @@ input,select{font-family:inherit}
   height:100vh; height:100dvh;
   display:flex; flex-direction:column; overflow:hidden; position:relative;
   background:var(--bg);
-  isolation:isolate; /* 创建独立层叠上下文，避免 z-index 串层 */
+  isolation:isolate;
 }
 .hdr{flex-shrink:0;padding:14px 20px 0;position:relative;z-index:10}
 .hdr-row{display:flex;align-items:center;gap:12px;height:34px}
@@ -93,9 +93,18 @@ input,select{font-family:inherit}
 .h1 .em{color:var(--accent)}
 .sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.6}
 .sec{margin-bottom:22px}
-.sec-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.sec-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .sec-t{font-size:14px;font-weight:600;letter-spacing:.01em}
 .sec-s{font-size:11px;color:var(--dim)}
+
+/* 提示条 */
+.tip-bar{
+  display:flex;gap:8px;padding:10px 13px;border-radius:11px;margin-top:10px;
+  font-size:11.5px;line-height:1.55;
+  background:rgba(91,141,239,.08);color:#8CB4F5;border:1px solid rgba(91,141,239,.2);
+}
+.tip-bar.warn{background:rgba(255,176,32,.08);color:#FFCA5C;border:1px solid rgba(255,176,32,.2)}
+.tip-ic{flex-shrink:0;font-size:13px;line-height:1.4}
 
 .seg{display:flex;gap:6px;background:var(--surface);border-radius:13px;padding:4px;border:1px solid var(--line)}
 .seg-btn{
@@ -129,10 +138,12 @@ input,select{font-family:inherit}
 
 /* 设备分类 */
 .cat{margin-bottom:16px}
-.cat-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-left:2px}
+.cat-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-left:2px;flex-wrap:wrap}
 .cat-ic{font-size:15px;opacity:.9}
 .cat-t{font-size:13px;font-weight:600}
 .cat-n{font-size:10.5px;color:var(--dim);margin-left:auto}
+.cat-n.required{color:#FF8A80;font-weight:600}
+.cat-n.required::before{content:'● '}
 
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{
@@ -153,7 +164,6 @@ input,select{font-family:inherit}
 .chip.custom{border-style:dashed}
 .chip.custom.on{border-style:solid}
 
-/* 删除按钮：视觉保持小，但点击热区已扩大 */
 .chip-del{
   position:relative;
   width:18px;height:18px;border-radius:50%;
@@ -191,6 +201,7 @@ input,select{font-family:inherit}
 .warn-bar.danger{background:rgba(255,59,48,.1);color:#FF8A80;border:1px solid rgba(255,59,48,.22)}
 .warn-bar.warn{background:rgba(255,176,32,.09);color:#FFCA5C;border:1px solid rgba(255,176,32,.2)}
 .warn-bar.info{background:rgba(10,132,255,.08);color:#7BB8FF;border:1px solid rgba(10,132,255,.18)}
+.warn-bar.ok{background:rgba(61,220,132,.08);color:#7EE8A8;border:1px solid rgba(61,220,132,.2)}
 .warn-ic{flex-shrink:0;font-size:13px;line-height:1.35}
 .mini-opt{
   padding:5px 10px;border-radius:8px;font-size:11px;
@@ -326,9 +337,7 @@ input[type=range]::-moz-range-thumb{
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 /* =========================================================
-   Sheet / Modal —— ★ 关键修复：
-   默认 pointer-events:none，只有 .show 时才恢复 auto
-   这样桌面端居中的 sheet 在关闭状态不会拦截下方的点击
+   Sheet / Modal
    ========================================================= */
 .sheet-mask{
   position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
@@ -343,11 +352,11 @@ input[type=range]::-moz-range-thumb{
   transition:transform .38s cubic-bezier(.32,.72,0,1);
   padding:20px 20px calc(24px + env(safe-area-inset-bottom));
   max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  pointer-events:none; /* ★ 关闭时不拦截点击 */
+  pointer-events:none;
 }
 .sheet.show{
   transform:translate(-50%,0);
-  pointer-events:auto; /* ★ 打开时恢复点击 */
+  pointer-events:auto;
 }
 .sheet-hd{display:flex;align-items:center;margin-bottom:16px}
 .sheet-t{font-size:16px;font-weight:700}
@@ -467,7 +476,6 @@ input[type=range]::-moz-range-thumb{
   .next-btn{height:52px;padding:0 32px;font-size:15px}
   .toast{bottom:150px}
 
-  /* 桌面端 sheet 居中弹出 */
   .sheet{
     max-width:520px;
     bottom:auto;top:50%;
@@ -476,12 +484,10 @@ input[type=range]::-moz-range-thumb{
     max-height:86vh;
     opacity:0;
     transition:transform .32s cubic-bezier(.32,.72,0,1),opacity .28s;
-    /* ★ 注意：pointer-events:none 已由基础样式提供，无需重复 */
   }
   .sheet.show{
     transform:translate(-50%,-50%) scale(1);
     opacity:1;
-    /* ★ pointer-events:auto 由基础 .sheet.show 提供 */
   }
   .sheet-mask{backdrop-filter:blur(6px)}
 }
@@ -540,10 +546,14 @@ input[type=range]::-moz-range-thumb{
         <div class="pg-col">
           <div class="sec">
             <div class="sec-hd">
-              <span class="sec-t">快捷画像</span>
+              <span class="sec-t">快捷画像（可选）</span>
               <span class="sec-s">一键带入，省去手动勾选</span>
             </div>
             <div class="tpl-grid" id="tplGrid"></div>
+            <div class="tip-bar">
+              <span class="tip-ic">💡</span>
+              <span>不选画像也没关系，点「下一步」后手动勾选你的设备即可。</span>
+            </div>
           </div>
 
           <div class="sec">
@@ -671,50 +681,85 @@ input[type=range]::-moz-range-thumb{
 
 /* ---------- 1. 旧设备二手回收均价（按设备 ID 索引） ---------- */
 const RESALE_PRICES = {
-  /* 手机 */
+  /* 手机 — 苹果 */
+  ip16pm: 6800,   // iPhone 16 Pro Max
+  ip16p:  5600,   // iPhone 16 Pro
+  ip16:   3900,   // iPhone 16 / 16 Plus
   ip15pm: 4800,   // iPhone 15 Pro Max
   ip15:   3000,   // iPhone 15 / 15 Plus
   ip14p:  2800,   // iPhone 14 Pro
   ip13:   1800,   // iPhone 13
   ipse3:   800,   // iPhone SE 第3代
+
+  /* 手机 — 安卓 */
+  mi15:   3200,   // 小米 15
   mi14:   1800,   // 小米 14
   s24u:   3900,   // 三星 Galaxy S24 Ultra
+  s24:    2300,   // 三星 Galaxy S24
+  p9p:    3600,   // Google Pixel 9 Pro
+  op13:   2400,   // 一加 13
   op12:   1800,   // 一加 12
   k70:     900,   // Redmi K70
   fx7:    1700,   // OPPO Find X7
+  fx8:    2600,   // OPPO Find X8
+  x100p:  2800,   // vivo X100 Pro
+  magic6p:2200,   // 荣耀 Magic6 Pro
+
+  /* 手机 — 华为 */
   mate60p:3300,   // 华为 Mate 60 Pro
+  mate70p:4200,   // 华为 Mate 70 Pro
   p60:    1500,   // 华为 P60
   nova12:  700,   // 华为 nova 12
+  pura70p:3000,   // 华为 Pura 70 Pro
 
   /* 手表 / 手环 */
   aw9:     900,   // Apple Watch S9
   awu2:   2400,   // Apple Watch Ultra 2
+  aw10:   1500,   // Apple Watch S10
   hwgt4:   500,   // 华为 WATCH GT 4
+  hwgt5:   900,   // 华为 WATCH GT 5
   gw6:     600,   // 三星 Galaxy Watch 6
+  oppowx:  800,   // OPPO Watch X
+  garmin:  700,   // Garmin Forerunner 265
   mi8:      70,   // 小米手环 8
+  mi9:     120,   // 小米手环 9
 
   /* 耳机 */
   app2:    450,   // AirPods Pro 2
   apm:    1300,   // AirPods Max
+  ap4:     550,   // AirPods 4
   hwfb:    350,   // 华为 FreeBuds Pro 3
+  hwfb4:   450,   // 华为 FreeBuds Pro 4
   sony:    700,   // 索尼 WF-1000XM5
+  bose:    600,   // Bose QC 消噪耳塞
+  senn:    500,   // 森海塞尔 Momentum 4
   gen:      80,   // 通用蓝牙耳机
 
   /* 平板 */
   ipadp:  2400,   // iPad Pro
   ipad:   1200,   // iPad Air / 数字系列
+  ipadmini:1500,  // iPad mini
   mipad:   600,   // 小米平板 6
+  mipad7:  900,   // 小米平板 7
   matepad: 650,   // 华为 MatePad
+  matepadp:1200,  // 华为 MatePad Pro
+  oppopad: 700,   // OPPO Pad
+  surface:1500,   // Surface Pro
 
   /* 电脑 */
   mbp:    4800,   // MacBook Pro
   mba:    2900,   // MacBook Air
   win:    2000,   // Windows 笔记本
+  surfaceL:2600,  // Surface Laptop
+  thinkpad:2500,  // ThinkPad X1 Carbon
 
   /* 智能家居 / 其他 */
   homepod: 350,   // HomePod / mini
   appletv: 450,   // Apple TV
   mihome:  100,   // 米家 / 通用智能家居
+  xiaomiSp: 90,   // 小爱音箱
+  tmallSp:  70,   // 天猫精灵
+  nestHub: 300,   // Google Nest Hub
 };
 
 /* ---------- 2. 换到目标系统后，重新购买同类新品的均价 ---------- */
@@ -741,6 +786,14 @@ const APP_PRICES = {
   luma:     198,
   tasker:    35,
   mxpro:     35,
+  notability: 68,
+  affinity:  168,
+  fantastical: 98,
+  bear:       78,
+  craft:     118,
+  ticktick:   98,
+  wpsPro:    189,
+  spotify:    88,
 };
 
 /* ---------- 5. 游戏跨系统转区费（0 表示免费 / 数据互通） ---------- */
@@ -749,7 +802,11 @@ const GAME_TRANSFER_PRICES = {
   hpjy: 99,
   jcc:  99,
   ys:    0,
-  mrfz:  0,
+  mrfz:  0,   // 现已互通
+  lolm: 99,
+  dwrg: 99,
+  dzpd:  0,   // 蛋仔派对互通
+  aqw:  99,   // 暗区突围跨系统转区
 };
 
 /* ╔══════════════════════════════════════════════════════════════════╗
@@ -779,33 +836,58 @@ const CATS = [
   {
     id:'phone', label:'手机', icon:'📱', single:true, optional:false,
     items:[
+      /* 苹果 */
+      { id:'ip16pm',  name:'iPhone 16 Pro Max', os:'ios' },
+      { id:'ip16p',   name:'iPhone 16 Pro', os:'ios' },
+      { id:'ip16',    name:'iPhone 16 / 16 Plus', os:'ios' },
       { id:'ip15pm',  name:'iPhone 15 Pro Max', os:'ios' },
       { id:'ip15',    name:'iPhone 15 / 15 Plus', os:'ios' },
       { id:'ip14p',   name:'iPhone 14 Pro', os:'ios' },
       { id:'ip13',    name:'iPhone 13', os:'ios' },
       { id:'ipse3',   name:'iPhone SE (第3代)', os:'ios' },
+      /* 安卓 */
+      { id:'mi15',    name:'小米 15', os:'android' },
       { id:'mi14',    name:'小米 14', os:'android' },
       { id:'s24u',    name:'三星 Galaxy S24 Ultra', os:'android' },
+      { id:'s24',     name:'三星 Galaxy S24', os:'android' },
+      { id:'p9p',     name:'Google Pixel 9 Pro', os:'android' },
+      { id:'op13',    name:'一加 13', os:'android' },
       { id:'op12',    name:'一加 12', os:'android' },
       { id:'k70',     name:'Redmi K70', os:'android' },
       { id:'fx7',     name:'OPPO Find X7', os:'android' },
+      { id:'fx8',     name:'OPPO Find X8', os:'android' },
+      { id:'x100p',   name:'vivo X100 Pro', os:'android' },
+      { id:'magic6p', name:'荣耀 Magic6 Pro', os:'android' },
+      /* 华为 */
+      { id:'mate70p', name:'华为 Mate 70 Pro', os:'harmony' },
       { id:'mate60p', name:'华为 Mate 60 Pro', os:'harmony' },
       { id:'p60',     name:'华为 P60', os:'harmony' },
+      { id:'pura70p', name:'华为 Pura 70 Pro', os:'harmony' },
       { id:'nova12',  name:'华为 nova 12', os:'harmony' },
     ]
   },
   {
     id:'watch', label:'手表 / 手环', icon:'⌚', optional:true,
     items:[
+      { id:'awu2', name:'Apple Watch Ultra 2', os:'ios',
+        compat:{
+          android:{ kind:'replace', note:'Apple Watch 无法与安卓手机配对，必须换表' },
+          harmony:{ kind:'replace', note:'Apple Watch 无法与鸿蒙手机配对，必须换表' },
+        }},
+      { id:'aw10', name:'Apple Watch S10', os:'ios',
+        compat:{
+          android:{ kind:'replace', note:'Apple Watch 无法与安卓手机配对，必须换表' },
+          harmony:{ kind:'replace', note:'Apple Watch 无法与鸿蒙手机配对，必须换表' },
+        }},
       { id:'aw9',  name:'Apple Watch S9', os:'ios',
         compat:{
           android:{ kind:'replace', note:'Apple Watch 无法与安卓手机配对，必须换表' },
           harmony:{ kind:'replace', note:'Apple Watch 无法与鸿蒙手机配对，必须换表' },
         }},
-      { id:'awu2', name:'Apple Watch Ultra 2', os:'ios',
+      { id:'hwgt5', name:'华为 WATCH GT 5', os:'harmony',
         compat:{
-          android:{ kind:'replace', note:'Apple Watch 无法与安卓手机配对，必须换表' },
-          harmony:{ kind:'replace', note:'Apple Watch 无法与鸿蒙手机配对，必须换表' },
+          ios:{ kind:'degrade', note:'iOS 上无法使用 ECG、血氧、遥控拍照等核心功能，且需常驻后台' },
+          android:{ kind:'degrade', note:'需安装华为运动健康，部分功能受限于系统权限' },
         }},
       { id:'hwgt4', name:'华为 WATCH GT 4', os:'harmony',
         compat:{
@@ -814,6 +896,10 @@ const CATS = [
         }},
       { id:'gw6',  name:'三星 Galaxy Watch 6', os:'android',
         compat:{ ios:{ kind:'replace', note:'三星手表不支持 iOS，需换购' } }},
+      { id:'oppowx', name:'OPPO Watch X', os:'android',
+        compat:{ ios:{ kind:'degrade', note:'iOS 上部分健康功能不可用，需 OPPO 健康 App 常驻' } }},
+      { id:'garmin', name:'Garmin Forerunner 265', os:'any' },
+      { id:'mi9',  name:'小米手环 9', os:'any' },
       { id:'mi8',  name:'小米手环 8', os:'any' },
     ]
   },
@@ -830,9 +916,18 @@ const CATS = [
           android:{ kind:'degrade', note:'有线模式可用，但无线全部智能功能失效' },
           harmony:{ kind:'degrade', note:'有线模式可用，但无线全部智能功能失效' },
         }},
+      { id:'ap4',  name:'AirPods 4', os:'ios',
+        compat:{
+          android:{ kind:'degrade', note:'失去空间音频与自动切换' },
+          harmony:{ kind:'degrade', note:'失去空间音频与自动切换' },
+        }},
+      { id:'hwfb4', name:'华为 FreeBuds Pro 4', os:'harmony',
+        compat:{ ios:{ kind:'degrade', note:'iOS 上无法使用 L2HC 高清音频与多设备连接' } }},
       { id:'hwfb', name:'华为 FreeBuds Pro 3', os:'harmony',
         compat:{ ios:{ kind:'degrade', note:'iOS 上无法使用 L2HC 高清音频与多设备连接' } }},
       { id:'sony', name:'索尼 WF-1000XM5', os:'any' },
+      { id:'bose', name:'Bose QC 消噪耳塞', os:'any' },
+      { id:'senn', name:'森海塞尔 Momentum 4', os:'any' },
       { id:'gen',  name:'通用蓝牙耳机', os:'any' },
     ]
   },
@@ -849,10 +944,22 @@ const CATS = [
           android:{ kind:'keep', note:'iPad 可独立使用，但跨设备协同能力归零' },
           harmony:{ kind:'keep', note:'iPad 可独立使用，但跨设备协同能力归零' },
         }},
+      { id:'ipadmini', name:'iPad mini', os:'ios',
+        compat:{
+          android:{ kind:'keep', note:'iPad 可独立使用，但跨设备协同能力归零' },
+          harmony:{ kind:'keep', note:'iPad 可独立使用，但跨设备协同能力归零' },
+        }},
+      { id:'mipad7', name:'小米平板 7', os:'android',
+        compat:{ ios:{ kind:'keep', note:'平板可独立使用，但与 iPhone 之间几乎没有协同' } }},
       { id:'mipad', name:'小米平板 6', os:'android',
         compat:{ ios:{ kind:'keep', note:'平板可独立使用，但与 iPhone 之间几乎没有协同' } }},
+      { id:'matepadp', name:'华为 MatePad Pro', os:'harmony',
+        compat:{ ios:{ kind:'keep', note:'平板可独立使用，与 iPhone 无协同能力' } }},
       { id:'matepad', name:'华为 MatePad', os:'harmony',
         compat:{ ios:{ kind:'keep', note:'平板可独立使用，与 iPhone 无协同能力' } }},
+      { id:'oppopad', name:'OPPO Pad', os:'android',
+        compat:{ ios:{ kind:'keep', note:'平板可独立使用，与 iPhone 无协同' } }},
+      { id:'surface', name:'Surface Pro', os:'any' },
     ]
   },
   {
@@ -868,6 +975,8 @@ const CATS = [
           android:{ kind:'keep', note:'Mac 可继续使用，跨端协同功能失效' },
           harmony:{ kind:'keep', note:'Mac 可继续使用，跨端协同功能失效' },
         }},
+      { id:'surfaceL', name:'Surface Laptop', os:'any' },
+      { id:'thinkpad', name:'ThinkPad X1 Carbon', os:'any' },
       { id:'win', name:'Windows 笔记本', os:'any' },
     ]
   },
@@ -884,6 +993,13 @@ const CATS = [
           android:{ kind:'keep', note:'可继续当播放器用，但 AirPlay 与家庭中枢失效' },
           harmony:{ kind:'keep', note:'可继续当播放器用，但 AirPlay 与家庭中枢失效' },
         }},
+      { id:'nestHub', name:'Google Nest Hub', os:'android',
+        compat:{
+          ios:{ kind:'degrade', note:'iOS 上无法使用 Google 家庭联动，功能受限' },
+          harmony:{ kind:'degrade', note:'鸿蒙上无法使用 Google 家庭联动' },
+        }},
+      { id:'xiaomiSp', name:'小爱音箱', os:'any' },
+      { id:'tmallSp', name:'天猫精灵', os:'any' },
       { id:'mihome', name:'米家 / 通用智能家居', os:'any' },
     ]
   },
@@ -898,10 +1014,18 @@ const SOFT_GROUPS = [
     items:[
       { id:'procreate', name:'Procreate', os:'ios', note:'iPad 独占，安卓无对应版本' },
       { id:'goodnotes', name:'GoodNotes', os:'ios', note:'历史笔记格式需要重新整理' },
+      { id:'notability', name:'Notability', os:'ios', note:'手写笔记，安卓无对应版本' },
       { id:'things3',   name:'Things 3', os:'ios' },
+      { id:'fantastical', name:'Fantastical', os:'ios', note:'日历与提醒，安卓需换购其他方案' },
+      { id:'bear',      name:'Bear 熊掌记', os:'ios' },
+      { id:'craft',     name:'Craft 文档', os:'ios' },
       { id:'luma',      name:'LumaFusion', os:'ios', note:'专业剪辑，安卓需换购其他方案' },
+      { id:'affinity',  name:'Affinity Photo 2', os:'ios', note:'专业修图，安卓无对应版本' },
       { id:'tasker',    name:'Tasker 自动化', os:'android', note:'安卓独占，iOS 无对应能力' },
       { id:'mxpro',     name:'MX Player Pro', os:'android' },
+      { id:'ticktick',  name:'滴答清单高级版', os:'any', note:'跨平台通用，换系统不影响' },
+      { id:'wpsPro',    name:'WPS 会员', os:'any', note:'跨平台通用账号，换系统不影响' },
+      { id:'spotify',   name:'Spotify Premium（年费）', os:'any', note:'跨平台通用账号' },
     ]
   },
   {
@@ -910,9 +1034,12 @@ const SOFT_GROUPS = [
       { id:'wzry', name:'王者荣耀', note:'跨系统转区，且有 30 天冷却期' },
       { id:'hpjy', name:'和平精英', note:'跨系统转区' },
       { id:'jcc',  name:'金铲铲之战', note:'跨系统转区' },
+      { id:'lolm', name:'英雄联盟手游', note:'跨系统转区' },
+      { id:'dwrg', name:'第五人格', note:'跨系统转区' },
+      { id:'aqw',  name:'暗区突围', note:'跨系统转区' },
       { id:'ys',   name:'原神 / 崩坏：星穹铁道', note:'官方服务器数据互通，无需迁移' },
-      { id:'mrfz', name:'明日方舟 / 部分二次元手游', fatal:true,
-        note:'iOS 与安卓数据完全不互通，换系统等于重开，所有充值作废' },
+      { id:'dzpd', name:'蛋仔派对', note:'数据互通，换系统进度保留' },
+      { id:'mrfz', name:'明日方舟', note:'现已支持 iOS 与安卓数据互通，换系统进度不丢' },
     ]
   },
   {
@@ -923,6 +1050,7 @@ const SOFT_GROUPS = [
       { id:'cloud',  name:'云盘 / 网盘文件', hours:3, note:'跨云盘搬运，限速是最大敌人' },
       { id:'media',  name:'本地音乐 / 视频缓存', hours:2, note:'重新下载与整理播放列表' },
       { id:'auth',   name:'账号与支付重新绑定', hours:1, note:'银行、公交卡、门禁、各类 App 重新登录' },
+      { id:'health', name:'健康与运动数据', hours:1, note:'Apple 健康 / 华为运动健康的多年数据导出' },
     ]
   },
 ];
@@ -931,9 +1059,9 @@ const TEMPLATES = [
   { id:'light', ic:'📱', t:'轻度用户', s:'就一部手机，其他都没有',
     from:'android', to:'ios', tier:'mid', sel:['mi14'] },
   { id:'apple', ic:'🍎', t:'苹果全家桶', s:'iPhone+Watch+AirPods+Mac+iPad',
-    from:'ios', to:'android', tier:'high', sel:['ip15pm','aw9','app2','mba','ipadp','homepod'] },
+    from:'ios', to:'android', tier:'high', sel:['ip16pm','aw10','app2','mba','ipadp','homepod'] },
   { id:'geek', ic:'🤖', t:'安卓搞机党', s:'安卓手机+通用耳机+Win 本',
-    from:'android', to:'ios', tier:'high', sel:['mi14','sony','win'] },
+    from:'android', to:'ios', tier:'high', sel:['mi15','sony','win'] },
   { id:'dual', ic:'💼', t:'双持打工人', s:'iPhone+iPad+AirPods',
     from:'ios', to:'harmony', tier:'high', sel:['ip15','ipad','app2'] },
 ];
@@ -949,7 +1077,7 @@ const DEFAULT_STATE = {
 };
 let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 
-const LS_KEY = 'eco_unbind_calc_v2';
+const LS_KEY = 'eco_unbind_calc_v3';
 
 function saveState(){
   try{
@@ -1084,7 +1212,6 @@ function compute(){
   const software = [];
   let timeHours = state.speed;
   let resaleTotal = 0;
-  let fatalWarn = false;
 
   for(const cat of CATS){
     if(cat.id === 'phone') continue;
@@ -1159,7 +1286,6 @@ function compute(){
       } else if(g.id === 'games'){
         const price = getGamePrice(id);
         if(item.fatal){
-          fatalWarn = true;
           timeHours += 8;
           software.push({
             name: item.name, cat:'游戏资产', cost: 0, fatal:true,
@@ -1192,7 +1318,7 @@ function compute(){
     hardware, software,
     hardwareCost, softwareCost, timeCost,
     timeHours, rate: state.rate,
-    resaleTotal, total, fatalWarn,
+    resaleTotal, total,
     phonePrice: (TIER_PRICES[state.tier] && TIER_PRICES[state.tier][to]) || 0,
   };
 }
@@ -1264,12 +1390,13 @@ function renderStep2(){
 
     const addBtn = `<button type="button" class="chip-add" data-add="${cat.id}">+ 自定义</button>`;
 
+    const isRequired = !cat.optional;
     return `
       <div class="cat" data-catbox="${cat.id}">
         <div class="cat-hd">
           <span class="cat-ic">${cat.icon}</span>
           <span class="cat-t">${cat.label}</span>
-          <span class="cat-n">${cat.optional ? '没有可跳过' : '至少选一台'}</span>
+          <span class="cat-n ${isRequired?'required':''}">${isRequired ? '必选至少一台' : '没有可跳过'}</span>
         </div>
         <div class="chips">${presetChips}${customChips}${addBtn}</div>
         <div class="warn-zone" data-warn="${cat.id}"></div>
@@ -1277,7 +1404,6 @@ function renderStep2(){
     `;
   }).join('');
 
-  // 事件委托
   wrap.onclick = (e) => {
     const del = e.target.closest('.chip-del');
     if(del){
@@ -1430,7 +1556,7 @@ function renderStep3(){
         priceTxt = yuan(getAppPrice(it.id));
       } else if(g.id === 'games'){
         const p = getGamePrice(it.id);
-        priceTxt = p > 0 ? yuan(p) : '免费';
+        priceTxt = p > 0 ? yuan(p) : '免费 / 互通';
         if(p === 0) isFree = true;
       } else {
         priceTxt = (it.hours || 0) + 'h';
@@ -1438,7 +1564,7 @@ function renderStep3(){
       return `
         <div class="row" data-soft="${it.id}">
           <div class="row-main">
-            <div class="row-t">${esc(it.name)}${it.fatal?' <span style="color:#FF5722;font-size:10px">⚠ 高危</span>':''}</div>
+            <div class="row-t">${esc(it.name)}</div>
             ${it.note ? `<div class="row-s">${esc(it.note)}</div>` : ''}
           </div>
           <div class="row-p" style="color:${isFree?'var(--dim)':'var(--muted)'}">${priceTxt}</div>
@@ -1573,15 +1699,6 @@ function renderResult(){
         <span class="dline-v">${yuan(r.timeCost)}</span>
       </div>
     </div>`);
-
-  if(r.fatalWarn){
-    detail.push(`
-      <div class="warn-bar danger" style="margin-top:2px">
-        <span class="warn-ic">⚠</span>
-        <span><b>高危提示</b>：你勾选的部分游戏，iOS 与安卓数据完全不互通。
-        换系统等于账号归零，过往所有充值、皮肤、段位全部作废——这部分损失无法用钱衡量，所以本计算器记作 ¥0。</span>
-      </div>`);
-  }
 
   body.innerHTML = `
     <div class="result-hero">
@@ -1981,6 +2098,7 @@ $('#nextBtn').onclick = () => {
       toast('当前系统和目标系统一样，先改一下再继续吧');
       return;
     }
+    // ★ 不强制要求选择画像，直接进入下一步
     goStep(1);
     return;
   }
@@ -1990,7 +2108,16 @@ $('#nextBtn').onclick = () => {
       return f && f.cat.id === 'phone';
     });
     if(!hasPhone){
-      toast('至少选一台当前在用的手机，这样测算才有意义哦');
+      toast('请至少勾选一台当前在用的手机，这样测算才有意义');
+      // 滚动到手机分类
+      const phoneBox = document.querySelector('[data-catbox="phone"]');
+      if(phoneBox){
+        phoneBox.scrollIntoView({behavior:'smooth', block:'start'});
+        phoneBox.animate(
+          [{outline:'2px solid transparent'},{outline:'2px solid #FF5722'},{outline:'2px solid transparent'}],
+          {duration:1400, iterations:1}
+        );
+      }
       return;
     }
     goStep(2);
@@ -2006,7 +2133,7 @@ $('#nextBtn').onclick = () => {
 };
 
 /* =========================================================
-   分享长图
+   分享长图（已去掉二维码）
    ========================================================= */
 function openShareSheet(){
   const sheet = $('#sheet');
@@ -2060,7 +2187,7 @@ function buildShareImage(){
   const GROUP_H = 56;
   let contentH = 0;
   lines.forEach(l => contentH += (l.type === 'group' ? GROUP_H : ROW_H));
-  const FOOTER = 190;
+  const FOOTER = 170;
   const H = HEADER + contentH + 60 + FOOTER;
 
   const cvs = document.createElement('canvas');
@@ -2172,7 +2299,7 @@ function buildShareImage(){
   ctx.font = `400 20px ${FONT}`;
   wrapText(ctx, v.desc, PAD + 26, y + 82, W - PAD*2 - 52, 28, 2);
 
-  const fy = H - 130;
+  const fy = H - 110;
   ctx.strokeStyle = '#292D37';
   ctx.beginPath();
   ctx.moveTo(PAD, fy);
@@ -2190,10 +2317,8 @@ function buildShareImage(){
   ctx.textAlign = 'right';
   ctx.fillStyle = '#5A6375';
   ctx.font = `400 18px ${FONT}`;
-  ctx.fillText('扫码测算你的解绑成本', W - PAD, fy + 60);
+  ctx.fillText('转发给朋友，一起测算', W - PAD, fy + 86);
   ctx.textAlign = 'left';
-
-  drawFakeQR(ctx, W - PAD - 76, fy + 12, 76);
 
   return cvs.toDataURL('image/png');
 }
@@ -2224,36 +2349,6 @@ function wrapText(ctx, text, x, y, maxW, lh, maxLines){
     }
   }
   if(line) ctx.fillText(line, x, y + lines * lh);
-}
-
-function drawFakeQR(ctx, x, y, size){
-  ctx.fillStyle = '#F2F4F8';
-  ctx.beginPath();
-  ctx.roundRect(x, y, size, size, 8);
-  ctx.fill();
-  ctx.fillStyle = '#0E0F12';
-  const n = 9, cell = (size - 12) / n;
-  for(let i = 0; i < n; i++){
-    for(let j = 0; j < n; j++){
-      const seed = (i * 7 + j * 13 + (state.total||0)) % 3;
-      if(seed === 0) continue;
-      if(i < 3 && j < 3) continue;
-      if(i > n-4 && j < 3) continue;
-      if(i < 3 && j > n-4) continue;
-      ctx.fillRect(x + 6 + i * cell, y + 6 + j * cell, cell - 1.2, cell - 1.2);
-    }
-  }
-  const drawAnchor = (ax, ay) => {
-    ctx.fillStyle = '#0E0F12';
-    ctx.fillRect(ax, ay, cell*3, cell*3);
-    ctx.fillStyle = '#F2F4F8';
-    ctx.fillRect(ax + cell*0.7, ay + cell*0.7, cell*1.6, cell*1.6);
-    ctx.fillStyle = '#0E0F12';
-    ctx.fillRect(ax + cell*1.1, ay + cell*1.1, cell*0.8, cell*0.8);
-  };
-  drawAnchor(x + 6, y + 6);
-  drawAnchor(x + 6 + cell*6, y + 6);
-  drawAnchor(x + 6, y + 6 + cell*6);
 }
 
 /* =========================================================
